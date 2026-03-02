@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Todo App</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <nav class="navbar">
+            <div class="nav-brand">
+                <h1>📝 Todo App</h1>
+            </div>
+            <div class="nav-user">
+                <span id="userName"></span>
+                <button id="logoutBtn" class="btn btn-secondary">Logout</button>
+            </div>
+        </nav>
+
+        <main class="dashboard-main">
+            <div class="dashboard-header">
+                <h2>My Tasks</h2>
+                <button id="addTodoBtn" class="btn btn-primary">+ Add Task</button>
+            </div>
+
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-filter="all">All</button>
+                <button class="filter-btn" data-filter="active">Active</button>
+                <button class="filter-btn" data-filter="completed">Completed</button>
+            </div>
+
+            <div class="stats-container">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalTasks">0</div>
+                    <div class="stat-label">Total Tasks</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="completedTasks">0</div>
+                    <div class="stat-label">Completed</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="pendingTasks">0</div>
+                    <div class="stat-label">Pending</div>
+                </div>
+            </div>
+
+            <div class="todos-container" id="todosContainer">
+                <div class="loading">Loading your tasks...</div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add/Edit Todo Modal -->
+    <div id="todoModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3 id="modalTitle">Add New Task</h3>
+
+            <form id="todoForm">
+                <input type="hidden" id="todoId">
+
+                <div class="form-group">
+                    <label for="todoTitle">Title</label>
+                    <input type="text" id="todoTitle" name="title" placeholder="Task title" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="todoDescription">Description</label>
+                    <textarea id="todoDescription" name="description" placeholder="Task description" rows="3"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="todoPriority">Priority</label>
+                    <select id="todoPriority" name="priority" required>
+                        <option value="1">1 - Lowest</option>
+                        <option value="2">2 - Low</option>
+                        <option value="3">3 - Medium</option>
+                        <option value="4">4 - High</option>
+                        <option value="5">5 - Highest</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="todoCompleted" name="isCompleted">
+                        Mark as completed
+                    </label>
+                </div>
+
+                <div class="modal-buttons">
+                    <button type="submit" class="btn btn-primary">Save</button>
+                    <button type="button" class="btn btn-secondary" id="cancelBtn">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/static/js/dashboard.js"></script>
+</body>
+</html>
