@@ -1,18 +1,28 @@
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import sessionmaker
-import pymysql
 import os
 from models import Base
 
-# Use environment variables for production, fallback to local for development
-database_name = os.getenv("DATABASE_NAME", "todos")
-database_user = os.getenv("DATABASE_USER", "root")
-database_password = os.getenv("DATABASE_PASSWORD", "raj1234")
-database_host = os.getenv("DATABASE_HOST", "localhost")
-database_port = os.getenv("DATABASE_PORT", "3306")
+# Use DATABASE_URL from environment (Render PostgreSQL provides this automatically)
+# Falls back to local MySQL for development
+database_url = os.getenv("DATABASE_URL")
 
-database_url = f"mysql+pymysql://{database_user}:{database_password}@{database_host}:{database_port}/{database_name}"
+if database_url:
+    # Fix for Render's postgres:// URL (SQLAlchemy needs postgresql://)
+    if database_url.startswith("postgres://"):
+        database_url = database_url.replace("postgres://", "postgresql://", 1)
+    print(f"🔗 Using external database")
+else:
+    # Local development fallback
+    database_name = os.getenv("DATABASE_NAME", "todos")
+    database_user = os.getenv("DATABASE_USER", "root")
+    database_password = os.getenv("DATABASE_PASSWORD", "raj1234")
+    database_host = os.getenv("DATABASE_HOST", "localhost")
+    database_port = os.getenv("DATABASE_PORT", "3306")
+    database_url = f"mysql+pymysql://{database_user}:{database_password}@{database_host}:{database_port}/{database_name}"
+    print(f"🔗 Using local MySQL: {database_host}")
+
 engine = create_engine(database_url)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -24,30 +34,37 @@ def get_db():
         db.close()
 
 def create_database_if_not_exists():
-    try:
-        # Connect to MySQL without specifying database
-        connection = pymysql.connect(host='localhost', user='root', password='raj1234')
-        cursor = connection.cursor()
-        cursor.execute(f"CREATE DATABASE IF NOT EXISTS {database_name}")
-        connection.commit()
-        cursor.close()
-        connection.close()
-        print(f"Database '{database_name}' created or already exists.")
-    except Exception as e:
-        print(f"Error creating database: {e}")
-
-def create_tables():
-    Base.metadata.create_all(bind=engine)
-    print("Tables created.")
+    """Only works for MySQL local development"""
+    if "mysql" in database_url:
+        try:
+            import pymysql
+            connection = pymysql.connect(
+                host=os.getenv("DATABASE_HOST", "localhost"),
+                user=os.getenv("DATABASE_USER", "root"),
+                password=os.getenv("DATABASE_PASSWORD", "raj1234")
+            )
+            cursor = connection.cursor()
+            cursor.execute(f"CREATE DATABASE IF NOT EXISTS {os.getenv('DATABASE_NAME', 'todos')}")
+            connection.commit()
+            cursor.close()
+            connection.close()
+            print(f"✅ Database '{os.getenv('DATABASE_NAME', 'todos')}' created or already exists.")
+        except Exception as e:
+            print(f"⚠️ Error creating database: {e}")
+    else:
+        print("ℹ️ Using external database (PostgreSQL), skipping database creation")
 
 def check_database_connection():
-    create_database_if_not_exists()
-    create_tables()
     try:
+        create_database_if_not_exists()
+        Base.metadata.create_all(bind=engine)
         with engine.connect() as connection:
-            connection.execute(text("SELECT 1"))
-        print("Database connection successful.")
-        return True
+            result = connection.execute(text("SELECT 1"))
+            result.fetchone()
+        print("✅ Database connection successful!")
     except OperationalError as e:
-        print(f"Database connection failed: {e}")
-        return False
+        print(f"❌ Database connection failed: {e}")
+        raise
+    except Exception as e:
+        print(f"❌ Unexpected error: {e}")
+        raise
