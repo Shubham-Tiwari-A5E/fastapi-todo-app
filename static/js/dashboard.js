@@ -16,6 +16,100 @@ document.getElementById('logoutBtn').addEventListener('click', () => {
     window.location.href = '/';
 });
 
+// Profile Modal functionality
+const profileModal = document.getElementById('profileModal');
+const profileBtn = document.getElementById('profileBtn');
+const closeProfile = document.getElementById('closeProfile');
+const cancelProfile = document.getElementById('cancelProfile');
+
+profileBtn.addEventListener('click', async () => {
+    await loadProfile();
+    profileModal.style.display = 'block';
+});
+
+closeProfile.addEventListener('click', () => {
+    profileModal.style.display = 'none';
+});
+
+cancelProfile.addEventListener('click', () => {
+    profileModal.style.display = 'none';
+});
+
+window.addEventListener('click', (e) => {
+    if (e.target === profileModal) {
+        profileModal.style.display = 'none';
+    }
+});
+
+// Load user profile
+async function loadProfile() {
+    try {
+        const response = await fetch('/profile', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (response.ok) {
+            const user = await response.json();
+            document.getElementById('profileName').value = user.name;
+            document.getElementById('profileEmail').value = user.email;
+            document.getElementById('profilePhone').value = user.phone_number || '';
+        }
+    } catch (error) {
+        console.error('Failed to load profile:', error);
+    }
+}
+
+// Update user profile
+document.getElementById('profileForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const profileMessage = document.getElementById('profileMessage');
+    profileMessage.style.display = 'none';
+
+    const formData = {
+        name: document.getElementById('profileName').value,
+        phone_number: document.getElementById('profilePhone').value || null
+    };
+
+    try {
+        const response = await fetch('/profile', {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        });
+
+        if (response.ok) {
+            profileMessage.textContent = '✅ Profile updated successfully!';
+            profileMessage.style.background = '#d4edda';
+            profileMessage.style.color = '#155724';
+            profileMessage.style.display = 'block';
+
+            // Update display name
+            document.getElementById('userName').textContent = formData.name;
+
+            setTimeout(() => {
+                profileModal.style.display = 'none';
+            }, 1500);
+        } else {
+            const data = await response.json();
+            profileMessage.textContent = '❌ ' + (data.detail || 'Failed to update profile');
+            profileMessage.style.background = '#f8d7da';
+            profileMessage.style.color = '#721c24';
+            profileMessage.style.display = 'block';
+        }
+    } catch (error) {
+        profileMessage.textContent = '❌ An error occurred';
+        profileMessage.style.background = '#f8d7da';
+        profileMessage.style.color = '#721c24';
+        profileMessage.style.display = 'block';
+    }
+});
+
 // Filter state
 let currentFilter = 'all';
 let allTodos = [];
@@ -92,6 +186,8 @@ function displayTodos(todos) {
                 ${todo.isCompleted ? '<div class="completed-badge">✓ Completed</div>' : ''}
             </div>
             ${todo.description ? `<p class="todo-description">${escapeHtml(todo.description)}</p>` : ''}
+            ${todo.task_time ? `<p class="task-time">⏰ Scheduled: ${formatDate(todo.task_time)}</p>` : ''}
+            ${todo.task_time && todo.notification_enabled && !todo.isCompleted ? `<p class="notification-status">📱 Reminder enabled (10 min before)</p>` : ''}
             ${todo.isCompleted && todo.completed_at ? `<p class="completed-date">Completed on: ${formatDate(todo.completed_at)}</p>` : ''}
             <div class="todo-actions">
                 ${!todo.isCompleted ? `
@@ -176,6 +272,18 @@ async function editTodo(id) {
         document.getElementById('todoPriority').value = todo.priority;
         document.getElementById('todoCompleted').checked = todo.isCompleted;
 
+        // Set task time if exists
+        if (todo.task_time) {
+            const taskDate = new Date(todo.task_time);
+            // Format for datetime-local input (YYYY-MM-DDTHH:MM)
+            const formattedDate = taskDate.toISOString().slice(0, 16);
+            document.getElementById('taskTime').value = formattedDate;
+        } else {
+            document.getElementById('taskTime').value = '';
+        }
+
+        document.getElementById('notificationEnabled').checked = todo.notification_enabled !== false;
+
         modal.style.display = 'block';
     } catch (error) {
         alert('Failed to load task details');
@@ -187,11 +295,15 @@ document.getElementById('todoForm').addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const todoId = document.getElementById('todoId').value;
+    const taskTimeValue = document.getElementById('taskTime').value;
+
     const formData = {
         title: document.getElementById('todoTitle').value,
         description: document.getElementById('todoDescription').value || null,
         priority: parseInt(document.getElementById('todoPriority').value),
-        isCompleted: document.getElementById('todoCompleted').checked
+        isCompleted: document.getElementById('todoCompleted').checked,
+        task_time: taskTimeValue ? new Date(taskTimeValue).toISOString() : null,
+        notification_enabled: document.getElementById('notificationEnabled').checked
     };
 
     try {

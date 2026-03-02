@@ -9,7 +9,8 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
     const formData = {
         name: document.getElementById('name').value,
         email: document.getElementById('email').value,
-        password: document.getElementById('password').value
+        password: document.getElementById('password').value,
+        phone_number: document.getElementById('phone_number').value || null
     };
 
     try {

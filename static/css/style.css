@@ -582,3 +582,36 @@ footer {
         flex-direction: column;
     }
 }
+
+/* WhatsApp Notification Styles */
+.task-time {
+    color: #8b5cf6;
+    font-size: 0.9rem;
+    margin: 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-weight: 500;
+}
+
+.notification-status {
+    color: #10b981;
+    font-size: 0.85rem;
+    margin: 5px 0;
+    font-style: italic;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Profile Modal Styling */
+#profileModal .modal-content {
+    max-width: 500px;
+}
+
+#profileMessage {
+    border-radius: 5px;
+    padding: 10px;
+    margin: 10px 0;
+}
+

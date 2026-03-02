@@ -31,6 +31,16 @@
                     <input type="password" id="password" name="password" placeholder="Create a password" required>
                 </div>
 
+                <div class="form-group">
+                    <label for="phone_number">📱 WhatsApp Number (Optional)</label>
+                    <input type="tel" id="phone_number" name="phone_number" placeholder="+919876543210"
+                           pattern="^\+[1-9]\d{1,14}$"
+                           title="Format: +[country code][number] (e.g., +919876543210)">
+                    <small style="color: #666; font-size: 0.85rem;">
+                        ✨ Get welcome message & task reminders on WhatsApp!
+                    </small>
+                </div>
+
                 <button type="submit" class="btn btn-primary btn-full">Sign Up</button>
             </form>
 

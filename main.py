@@ -4,12 +4,13 @@ from routes.todoRoutes import router as todo_router
 from users import router as user_router
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
+from services.notification_scheduler import notification_scheduler
 import os
 
 app = FastAPI(
-    title="FastAPI Todo App",
-    description="Production-ready Todo application with authentication",
-    version="1.0.0"
+    title="FastAPI Todo App with WhatsApp Notifications",
+    description="Production-ready Todo application with authentication and WhatsApp reminders",
+    version="2.0.0"
 )
 
 @app.on_event("startup")
@@ -20,6 +21,19 @@ async def startup_event():
     except Exception as e:
         print(f"⚠️ Database connection failed: {e}")
         print("⚠️ App will start but database operations will fail")
+
+    # Start notification scheduler
+    try:
+        await notification_scheduler.start()
+        print("✅ WhatsApp notification scheduler started")
+    except Exception as e:
+        print(f"⚠️ Notification scheduler failed to start: {e}")
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    # Stop notification scheduler
+    await notification_scheduler.stop()
+    print("👋 App shutting down...")
 
 templates = Jinja2Templates(directory="templates")
 app.mount("/static", StaticFiles(directory="static"), name="static")

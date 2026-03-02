@@ -6,11 +6,17 @@ class UserCreate(BaseModel):
     name: str
     email: str
     password: str
+    phone_number: Optional[str] = None  # WhatsApp number with country code (e.g., +919876543210)
+
+class UserUpdate(BaseModel):
+    name: Optional[str] = None
+    phone_number: Optional[str] = None
 
 class UserResponse(BaseModel):
     id: str
     name: str
     email: str
+    phone_number: Optional[str] = None
 
 class Token(BaseModel):
     access_token: str
@@ -24,6 +30,8 @@ class TodoCreate(BaseModel):
     description: Optional[str] = None
     priority: int
     isCompleted: bool = False
+    task_time: Optional[datetime] = None  # When the task should be done
+    notification_enabled: bool = True  # Enable 10-minute reminder
 
 class TodoResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -33,4 +41,6 @@ class TodoResponse(BaseModel):
     description: Optional[str] = None
     priority: int
     isCompleted: bool
+    task_time: Optional[datetime] = None
+    notification_enabled: bool = True  # Default to True if not set
     completed_at: Optional[datetime] = None
