@@ -2,10 +2,17 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import sessionmaker
 import pymysql
+import os
 from models import Base
 
-database_name = "todos"
-database_url = f"mysql+pymysql://root:raj1234@localhost:3306/{database_name}"
+# Use environment variables for production, fallback to local for development
+database_name = os.getenv("DATABASE_NAME", "todos")
+database_user = os.getenv("DATABASE_USER", "root")
+database_password = os.getenv("DATABASE_PASSWORD", "raj1234")
+database_host = os.getenv("DATABASE_HOST", "localhost")
+database_port = os.getenv("DATABASE_PORT", "3306")
+
+database_url = f"mysql+pymysql://{database_user}:{database_password}@{database_host}:{database_port}/{database_name}"
 engine = create_engine(database_url)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

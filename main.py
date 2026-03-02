@@ -4,21 +4,37 @@ from routes.todoRoutes import router as todo_router
 from users import router as user_router
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
+import os
 
-app = FastAPI()
+app = FastAPI(
+    title="FastAPI Todo App",
+    description="Production-ready Todo application with authentication",
+    version="1.0.0"
+)
 
 @app.on_event("startup")
 async def startup_event():
     try:
         check_database_connection()
+        print("✅ Database connection successful!")
     except Exception as e:
-        print(f"Database connection failed: {e}")
+        print(f"⚠️ Database connection failed: {e}")
+        print("⚠️ App will start but database operations will fail")
 
 templates = Jinja2Templates(directory="templates")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 app.include_router(user_router)
 app.include_router(todo_router)
+
+# Health check endpoint for Render
+@app.get("/health")
+async def health_check():
+    return {
+        "status": "healthy",
+        "service": "FastAPI Todo App",
+        "database": os.getenv("DATABASE_HOST", "localhost")
+    }
 
 @app.get("/")
 async def home(request: Request):
