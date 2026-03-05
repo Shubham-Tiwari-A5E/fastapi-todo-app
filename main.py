@@ -24,6 +24,27 @@ app = FastAPI(
 
 @app.on_event("startup")
 async def startup_event():
+    # Run database migrations automatically on startup
+    print("🔄 Running database migrations...")
+    try:
+        from alembic.config import Config
+        from alembic import command
+
+        # Get the directory where main.py is located
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        alembic_cfg = Config(os.path.join(base_dir, "alembic.ini"))
+
+        # Set the script location to the alembic directory
+        alembic_cfg.set_main_option("script_location", os.path.join(base_dir, "alembic"))
+
+        # Run migrations
+        command.upgrade(alembic_cfg, "head")
+        print("✅ Database migrations completed successfully!")
+    except Exception as e:
+        print(f"⚠️ Migration error: {e}")
+        print("⚠️ Continuing anyway - tables may already exist")
+
+    # Check database connection
     try:
         check_database_connection()
         print("✅ Database connection successful!")
@@ -37,6 +58,7 @@ async def startup_event():
         print("✅ WhatsApp notification scheduler started")
     except Exception as e:
         print(f"⚠️ Notification scheduler failed to start: {e}")
+
 
 @app.on_event("shutdown")
 async def shutdown_event():
