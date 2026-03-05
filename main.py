@@ -1,3 +1,6 @@
+from dotenv import load_dotenv
+load_dotenv()  # Load .env file for local development
+
 from fastapi import FastAPI, Request
 from database import check_database_connection
 from routes.todoRoutes import router as todo_router
