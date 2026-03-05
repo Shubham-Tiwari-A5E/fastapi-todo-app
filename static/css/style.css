@@ -485,12 +485,15 @@ header h1 {
 
 .modal-content {
     background: white;
-    margin: 5% auto;
+    margin: 2% auto;
     padding: 40px;
     border-radius: 15px;
     max-width: 500px;
     width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
     animation: slideIn 0.3s ease;
+    position: relative;
 }
 
 .close {
@@ -510,6 +513,16 @@ header h1 {
     display: flex;
     gap: 10px;
     margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid var(--border-color);
+    position: sticky;
+    bottom: -40px;
+    background: white;
+    margin-left: -40px;
+    margin-right: -40px;
+    padding-left: 40px;
+    padding-right: 40px;
+    padding-bottom: 20px;
 }
 
 .modal-buttons button {
@@ -607,6 +620,25 @@ footer {
 /* Profile Modal Styling */
 #profileModal .modal-content {
     max-width: 500px;
+}
+
+/* Modal Scrollbar Styling */
+.modal-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 10px;
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover {
+    background: var(--secondary-color);
 }
 
 #profileMessage {

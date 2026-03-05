@@ -58,7 +58,16 @@ async def lifespan(app: FastAPI):
 
     except Exception as e:
         logger.error(f"❌ Migration error: {type(e).__name__}: {str(e)}")
-        logger.warning("⚠️  App will continue but database may not be ready")
+        logger.warning("⚠️  Attempting manual database fix...")
+        
+        # Try manual fix as fallback
+        try:
+            from fix_database import fix_database
+            fix_database()
+            logger.info("✅ Manual database fix applied")
+        except Exception as fix_error:
+            logger.error(f"❌ Manual fix failed: {fix_error}")
+            logger.warning("⚠️  App will continue but database may not be ready")
 
     try:
         check_database_connection()
