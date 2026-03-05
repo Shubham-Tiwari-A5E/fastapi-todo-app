@@ -20,9 +20,12 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     """Upgrade schema."""
-    pass
+    # Add notification_sent column with default False
+    # Use sa.false() for compatibility with both MySQL and PostgreSQL
+    op.add_column('todos', sa.Column('notification_sent', sa.Boolean(), nullable=False, server_default=sa.false()))
 
 
 def downgrade() -> None:
     """Downgrade schema."""
-    pass
+    # Remove notification_sent column
+    op.drop_column('todos', 'notification_sent')

@@ -30,17 +30,26 @@ def create_todo(todo: TodoCreate, user_id: str, db: Session):
     return db_todo
 
 def update_todo(db_todo: Todo, todo: TodoCreate, db: Session):
+    # Check if task_time is being changed
+    task_time_changed = db_todo.task_time != todo.task_time
+    
     db_todo.title = todo.title
     db_todo.description = todo.description
     db_todo.priority = todo.priority
     db_todo.task_time = todo.task_time
     db_todo.notification_enabled = todo.notification_enabled
 
+    # Reset notification_sent if task_time changed or notifications re-enabled
+    if task_time_changed or (todo.notification_enabled and not db_todo.notification_enabled):
+        db_todo.notification_sent = False
+
     # Set completed_at when marking as completed
     if todo.isCompleted and not db_todo.isCompleted:
         db_todo.completed_at = datetime.now()
     elif not todo.isCompleted and db_todo.isCompleted:
         db_todo.completed_at = None
+        # Reset notification_sent when task is marked as incomplete
+        db_todo.notification_sent = False
 
     db_todo.isCompleted = todo.isCompleted
     db.commit()

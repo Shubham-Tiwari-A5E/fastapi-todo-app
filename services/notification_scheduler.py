@@ -78,19 +78,23 @@ class NotificationScheduler:
             # 1. Are not completed
             # 2. Have task_time set
             # 3. Have notifications enabled
-            # 4. Notification not already sent
+            # 4. Haven't been sent yet
             # 5. task_time is between 9.5 and 10.5 minutes from now
             # 6. User has phone number
 
-            todos_to_notify = db.query(Todo).join(User).filter(
-                Todo.isCompleted == False,
-                Todo.task_time.isnot(None),
-                Todo.notification_enabled == True,
-                Todo.notification_sent == False,  # Only send once
-                Todo.task_time >= reminder_start,
-                Todo.task_time <= reminder_end,
-                User.phone_number.isnot(None)
-            ).all()
+            try:
+                todos_to_notify = db.query(Todo).join(User).filter(
+                    Todo.isCompleted == False,
+                    Todo.task_time.isnot(None),
+                    Todo.notification_enabled == True,
+                    Todo.notification_sent == False,
+                    Todo.task_time >= reminder_start,
+                    Todo.task_time <= reminder_end,
+                    User.phone_number.isnot(None)
+                ).all()
+            except Exception as query_error:
+                print(f"⚠️ Query error (possibly migration not complete yet): {query_error}")
+                return
 
             # Also log all upcoming tasks (for debugging)
             all_upcoming = db.query(Todo).join(User).filter(
@@ -104,7 +108,7 @@ class NotificationScheduler:
                 print(f"📋 Total upcoming tasks with phone numbers: {len(all_upcoming)}")
                 for task in all_upcoming[:5]:  # Show first 5
                     minutes_until = (task.task_time - now).total_seconds() / 60
-                    print(f"   - '{task.title}' at {task.task_time.strftime('%H:%M')} (in {minutes_until:.1f} min) | Notify: {task.notification_enabled} | Sent: {task.notification_sent}")
+                    print(f"   - '{task.title}' at {task.task_time.strftime('%H:%M')} (in {minutes_until:.1f} min) | Notify: {task.notification_enabled}")
 
             if todos_to_notify:
                 print(f"📬 Found {len(todos_to_notify)} todos needing reminders NOW!")
@@ -123,10 +127,10 @@ class NotificationScheduler:
                 )
 
                 if success:
+                    print(f"✅ Reminder sent for task: {todo.title}")
                     # Mark notification as sent
                     todo.notification_sent = True
                     db.commit()
-                    print(f"✅ Reminder sent for task: {todo.title}")
                 else:
                     print(f"⚠️ Failed to send reminder for task: {todo.title}")
 

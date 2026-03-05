@@ -43,5 +43,5 @@ class TodoResponse(BaseModel):
     isCompleted: bool
     task_time: Optional[datetime] = None
     notification_enabled: bool  # Required field, no default in response
-    notification_sent: bool = False  # Track if reminder was sent
+    notification_sent: bool  # Whether reminder notification was sent
     completed_at: Optional[datetime] = None
