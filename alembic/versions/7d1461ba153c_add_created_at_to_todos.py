@@ -20,12 +20,18 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     """Upgrade schema."""
-    # Check if column already exists before adding
+    # Check if table exists first
     from sqlalchemy import inspect
     from sqlalchemy.engine import reflection
 
     conn = op.get_bind()
     inspector = inspect(conn)
+    
+    # Check if todos table exists
+    if 'todos' not in inspector.get_table_names():
+        print("⚠️  todos table doesn't exist yet, skipping created_at column addition")
+        return
+    
     columns = [col['name'] for col in inspector.get_columns('todos')]
 
     if 'created_at' not in columns:

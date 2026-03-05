@@ -114,17 +114,44 @@ async def lifespan(app: FastAPI):
 
     except Exception as e:
         logger.error(f"❌ Migration error: {type(e).__name__}: {str(e)}")
-        logger.warning("⚠️  Attempting automatic database fix...")
+        logger.warning("⚠️  Attempting automatic database recovery...")
         
-        # Automatic fallback: run manual database fix for production
+        # For fresh database, create tables using SQLAlchemy
         try:
-            from fix_database import fix_database
-            logger.info("🔧 Running manual schema fix...")
-            fix_database()
-            logger.info("✅ Manual database fix completed successfully!")
-        except Exception as fix_error:
-            logger.error(f"❌ Manual fix also failed: {fix_error}")
-            logger.error("⚠️  Database may not be fully initialized - app will continue but may have errors")
+            from models import Base
+            from database import engine
+            
+            logger.info("🛠️  Creating database tables from models...")
+            Base.metadata.create_all(bind=engine)
+            logger.info("✅ Tables created successfully!")
+            
+            # Now try migrations again
+            try:
+                from alembic.config import Config
+                from alembic import command
+                base_dir = os.path.dirname(os.path.abspath(__file__))
+                alembic_ini_path = os.path.join(base_dir, "alembic.ini")
+                alembic_cfg = Config(alembic_ini_path)
+                alembic_cfg.set_main_option("script_location", os.path.join(base_dir, "alembic"))
+                
+                # Stamp the database as being at the latest revision
+                command.stamp(alembic_cfg, "head")
+                logger.info("✅ Database stamped with current migration version")
+            except Exception as stamp_error:
+                logger.warning(f"⚠️  Could not stamp database: {stamp_error}")
+            
+        except Exception as create_error:
+            logger.error(f"❌ Table creation failed: {create_error}")
+            
+            # Fallback: run manual database fix
+            try:
+                from fix_database import fix_database
+                logger.info("🔧 Running manual schema fix...")
+                fix_database()
+                logger.info("✅ Manual database fix completed successfully!")
+            except Exception as fix_error:
+                logger.error(f"❌ Manual fix also failed: {fix_error}")
+                logger.error("⚠️  Database may not be fully initialized - app will continue but may have errors")
 
     try:
         check_database_connection()

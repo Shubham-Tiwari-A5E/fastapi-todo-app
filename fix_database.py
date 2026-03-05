@@ -24,7 +24,15 @@ def fix_database():
     print(f"🔗 Connecting to database...")
     
     try:
+        from sqlalchemy import inspect
         engine = create_engine(database_url)
+        inspector = inspect(engine)
+        
+        # Check if todos table exists
+        if 'todos' not in inspector.get_table_names():
+            print("⚠️  todos table doesn't exist - this appears to be a fresh database")
+            print("🛠️  Tables will be created by SQLAlchemy/migrations automatically")
+            return True
         
         with engine.connect() as conn:
             # Check if notification_sent column exists
