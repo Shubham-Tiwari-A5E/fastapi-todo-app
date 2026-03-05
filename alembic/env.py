@@ -13,6 +13,19 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 # access to the values within the .ini file in use.
 config = context.config
 
+# Get DATABASE_URL from environment variable for Render deployment
+database_url = os.getenv("DATABASE_URL")
+if database_url:
+    # Fix for Render's postgres:// URL (SQLAlchemy needs postgresql://)
+    if database_url.startswith("postgres://"):
+        database_url = database_url.replace("postgres://", "postgresql+psycopg://", 1)
+    elif database_url.startswith("postgresql://"):
+        database_url = database_url.replace("postgresql://", "postgresql+psycopg://", 1)
+
+    # Set the database URL for alembic
+    config.set_main_option("sqlalchemy.url", database_url)
+    print(f"🔗 Using DATABASE_URL from environment for migrations")
+
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
 if config.config_file_name is not None:

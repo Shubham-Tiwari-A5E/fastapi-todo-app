@@ -25,32 +25,54 @@ app = FastAPI(
 @app.on_event("startup")
 async def startup_event():
     # Run database migrations automatically on startup
+    print("=" * 60)
     print("🔄 Running database migrations...")
+    print("=" * 60)
+
     try:
         from alembic.config import Config
         from alembic import command
 
         # Get the directory where main.py is located
         base_dir = os.path.dirname(os.path.abspath(__file__))
-        alembic_cfg = Config(os.path.join(base_dir, "alembic.ini"))
+        alembic_ini_path = os.path.join(base_dir, "alembic.ini")
 
-        # Set the script location to the alembic directory
+        print(f"📁 Base directory: {base_dir}")
+        print(f"📁 Alembic config: {alembic_ini_path}")
+
+        # Create Alembic config
+        alembic_cfg = Config(alembic_ini_path)
+
+        # Set the script location
         alembic_cfg.set_main_option("script_location", os.path.join(base_dir, "alembic"))
+
+        print("🚀 Starting migration...")
 
         # Run migrations
         command.upgrade(alembic_cfg, "head")
+
+        print("=" * 60)
         print("✅ Database migrations completed successfully!")
+        print("=" * 60)
+
     except Exception as e:
-        print(f"⚠️ Migration error: {e}")
-        print("⚠️ Continuing anyway - tables may already exist")
+        print("=" * 60)
+        print(f"❌ Migration error: {type(e).__name__}")
+        print(f"❌ Error details: {str(e)}")
+        print("=" * 60)
+        import traceback
+        traceback.print_exc()
+        print("=" * 60)
+        print("⚠️  App will continue but database may not be ready")
+        print("⚠️  Check DATABASE_URL environment variable is set")
+        print("=" * 60)
 
     # Check database connection
     try:
         check_database_connection()
         print("✅ Database connection successful!")
     except Exception as e:
-        print(f"⚠️ Database connection failed: {e}")
-        print("⚠️ App will start but database operations will fail")
+        print(f"⚠️ Database connection check failed: {e}")
 
     # Start notification scheduler
     try:
