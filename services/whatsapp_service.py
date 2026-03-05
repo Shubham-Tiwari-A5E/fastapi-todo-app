@@ -32,7 +32,7 @@ class WhatsAppService:
 
     def send_welcome_message(self, phone_number: str, user_name: str) -> bool:
         """
-        Send welcome message to new user
+        Send beautiful welcome message to new user
         Phone number must be in format: +919876543210
         """
         if not self.enabled:
@@ -48,22 +48,47 @@ class WhatsAppService:
             if not phone_number.startswith("whatsapp:"):
                 phone_number = f"whatsapp:{phone_number}"
 
-            message = f"""🎉 *Welcome to FastAPI Todo App!*
+            message = f"""🎉 *Welcome to Shubham's Todo App!*
 
-Hi {user_name}! 👋
+Hello *{user_name}*! 👋
 
-Your account has been created successfully. 
+We're thrilled to have you on board! 🚀
 
-✨ Features you'll love:
-• Create and manage tasks
-• Set task times and get reminders
-• Mark tasks complete
-• Filter and organize todos
+━━━━━━━━━━━━━━━━━━━━━━
+✨ *What Makes Us Special?*
+━━━━━━━━━━━━━━━━━━━━━━
 
-💡 *Enable Notifications:*
-Add your WhatsApp number in profile settings to get reminders 10 minutes before your tasks!
+📝 *Smart Task Management*
+   Create, organize, and track your tasks effortlessly
 
-Happy task managing! 🚀"""
+⏰ *Never Miss Important Things*
+   Get WhatsApp reminders 10 minutes before each task
+
+🔔 *Stay On Top of Your Life*
+   We'll keep you reminded of what matters most
+
+✅ *Track Your Progress*
+   Mark tasks complete and see your achievements
+
+🎯 *Priority System*
+   Focus on what's important with our 5-level priority system
+
+━━━━━━━━━━━━━━━━━━━━━━
+💡 *Pro Tip:*
+━━━━━━━━━━━━━━━━━━━━━━
+
+Set task times to receive automatic WhatsApp notifications! We'll remind you 10 minutes before so you never miss important tasks.
+
+━━━━━━━━━━━━━━━━━━━━━━
+
+🌟 Ready to boost your productivity?
+Let's make every task count!
+
+_Start managing your tasks now and experience the power of staying organized!_
+
+━━━━━━━━━━━━━━━━━━━━━━
+With love from Shubham's Team ❤️
+━━━━━━━━━━━━━━━━━━━━━━"""
 
             result = self.client.messages.create(
                 body=message,
@@ -78,9 +103,10 @@ Happy task managing! 🚀"""
             print(f"❌ Failed to send welcome message: {e}")
             return False
 
-    def send_task_reminder(self, phone_number: str, task_title: str, task_time: datetime, user_name: str) -> bool:
+    def send_task_reminder(self, phone_number: str, task_title: str, task_description: str, task_time: datetime, user_name: str, priority: int) -> bool:
         """
-        Send task reminder 10 minutes before task time
+        Send beautiful task reminder 10 minutes before task time with full details
+        Note: task_time is already in local time (not UTC) as per our timezone fix
         """
         if not self.enabled:
             print("⚠️ WhatsApp service not enabled")
@@ -95,21 +121,54 @@ Happy task managing! 🚀"""
             if not phone_number.startswith("whatsapp:"):
                 phone_number = f"whatsapp:{phone_number}"
 
-            # Format task time
+            # Format task time (task_time is in local time, not UTC)
             time_str = task_time.strftime("%I:%M %p")
             date_str = task_time.strftime("%B %d, %Y")
+            day_str = task_time.strftime("%A")
 
-            message = f"""⏰ *Task Reminder!*
+            # Priority emoji
+            priority_emojis = {
+                1: "🟢",  # Lowest
+                2: "🟡",  # Low
+                3: "🟠",  # Medium
+                4: "🔴",  # High
+                5: "🔥"   # Highest
+            }
+            priority_emoji = priority_emojis.get(priority, "⭐")
 
-Hi {user_name}! 
+            # Build message with description if available
+            message = f"""⏰ *TASK REMINDER!*
 
-🔔 Your task is coming up in 10 minutes:
+Hi *{user_name}*! 
 
-📝 *{task_title}*
-⏰ Scheduled for: {time_str}
-📅 Date: {date_str}
+🔔 Your task is coming up in *10 minutes*
 
-Don't forget to complete it! ✅
+━━━━━━━━━━━━━━━━━━━━━━
+📋 *TASK DETAILS*
+━━━━━━━━━━━━━━━━━━━━━━
+
+{priority_emoji} *Title:* {task_title}
+
+📅 *Date:* {day_str}, {date_str}
+⏰ *Time:* {time_str}
+🎯 *Priority:* Level {priority}"""
+
+            if task_description:
+                message += f"""
+
+📝 *Description:*
+{task_description}"""
+
+            message += """
+
+━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Don't forget to complete it!
+💪 You've got this!
+
+━━━━━━━━━━━━━━━━━━━━━━
+_From Shubham's Todo App_
+━━━━━━━━━━━━━━━━━━━━━━
 
 _Reply STOP to unsubscribe from reminders_"""
 
@@ -155,3 +214,5 @@ _Reply STOP to unsubscribe from reminders_"""
 
 # Global instance
 whatsapp_service = WhatsAppService()
+
+

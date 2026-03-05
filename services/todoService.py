@@ -22,7 +22,7 @@ def create_todo(todo: TodoCreate, user_id: str, db: Session):
         task_time=todo.task_time,
         notification_enabled=todo.notification_enabled,
         user_id=user_id,
-        completed_at=datetime.utcnow() if todo.isCompleted else None
+        completed_at=datetime.now() if todo.isCompleted else None
     )
     db.add(db_todo)
     db.commit()
@@ -38,7 +38,7 @@ def update_todo(db_todo: Todo, todo: TodoCreate, db: Session):
 
     # Set completed_at when marking as completed
     if todo.isCompleted and not db_todo.isCompleted:
-        db_todo.completed_at = datetime.utcnow()
+        db_todo.completed_at = datetime.now()
     elif not todo.isCompleted and db_todo.isCompleted:
         db_todo.completed_at = None
 

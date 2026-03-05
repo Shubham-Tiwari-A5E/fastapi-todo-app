@@ -42,5 +42,5 @@ class TodoResponse(BaseModel):
     priority: int
     isCompleted: bool
     task_time: Optional[datetime] = None
-    notification_enabled: bool = True  # Default to True if not set
+    notification_enabled: bool  # Required field, no default in response
     completed_at: Optional[datetime] = None

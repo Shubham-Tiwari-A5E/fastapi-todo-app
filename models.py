@@ -23,8 +23,8 @@ class Todo(Base):
     priority = Column(Integer, nullable=False)
     isCompleted = Column(Boolean, default=False)
     task_time = Column(DateTime, nullable=True)  # When the task is scheduled
-    notification_enabled = Column(Boolean, default=True)  # Enable/disable 10-min reminder
+    notification_enabled = Column(Boolean, default=True, nullable=False)  # Enable/disable 10-min reminder
     user_id = Column(String(36), ForeignKey("users.id"), nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=datetime.now, nullable=False)
     completed_at = Column(DateTime, nullable=True)
     user = relationship("User", back_populates="todos")

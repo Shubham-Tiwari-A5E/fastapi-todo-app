@@ -56,8 +56,8 @@ class NotificationScheduler:
         db = SessionLocal()
 
         try:
-            # Get current time
-            now = datetime.utcnow()
+            # Get current time (LOCAL TIME, not UTC since our tasks are stored in local time)
+            now = datetime.now()
 
             # Get time 10 minutes from now (with 1-minute buffer)
             reminder_start = now + timedelta(minutes=9, seconds=30)
@@ -80,15 +80,17 @@ class NotificationScheduler:
             ).all()
 
             if todos_to_notify:
-                print(f"📬 Found {len(todos_to_notify)} todos needing reminders")
+                print(f"📬 Found {len(todos_to_notify)} todos needing reminders at {now.strftime('%Y-%m-%d %H:%M:%S')}")
 
             for todo in todos_to_notify:
-                # Send WhatsApp reminder
+                # Send WhatsApp reminder with full details
                 success = whatsapp_service.send_task_reminder(
                     phone_number=todo.user.phone_number,
                     task_title=todo.title,
+                    task_description=todo.description or "No description provided",
                     task_time=todo.task_time,
-                    user_name=todo.user.name
+                    user_name=todo.user.name,
+                    priority=todo.priority
                 )
 
                 if success:

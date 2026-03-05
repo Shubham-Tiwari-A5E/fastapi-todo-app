@@ -1,5 +1,12 @@
-from dotenv import load_dotenv
-load_dotenv()  # Load .env file for local development
+import os
+
+# Try to load .env file for local development (optional)
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    print("⚠️  python-dotenv not installed, using environment variables only")
+    pass
 
 from fastapi import FastAPI, Request
 from database import check_database_connection
@@ -8,7 +15,6 @@ from users import router as user_router
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from services.notification_scheduler import notification_scheduler
-import os
 
 app = FastAPI(
     title="FastAPI Todo App with WhatsApp Notifications",
@@ -68,3 +74,4 @@ async def register_page(request: Request):
 @app.get("/dashboard")
 async def dashboard_page(request: Request):
     return templates.TemplateResponse("dashboard.html", {"request": request})
+

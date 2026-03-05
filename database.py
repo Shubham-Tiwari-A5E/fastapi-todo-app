@@ -11,7 +11,9 @@ database_url = os.getenv("DATABASE_URL")
 if database_url:
     # Fix for Render's postgres:// URL (SQLAlchemy needs postgresql://)
     if database_url.startswith("postgres://"):
-        database_url = database_url.replace("postgres://", "postgresql://", 1)
+        database_url = database_url.replace("postgres://", "postgresql+psycopg://", 1)
+    elif database_url.startswith("postgresql://"):
+        database_url = database_url.replace("postgresql://", "postgresql+psycopg://", 1)
     print(f"🔗 Using external database")
 else:
     # Local development fallback

@@ -41,13 +41,18 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
 
 @router.post("/token", response_model=Token)
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    """Login endpoint - returns JWT token on successful authentication"""
     user = authenticate_user(db, form_data.username, form_data.password)
+
+    # Check if authentication failed (returns None for invalid credentials)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
+            detail="Invalid email or password. Please check your credentials and try again.",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+    # Create access token
     access_token_expires = timedelta(minutes=30)
     access_token = create_access_token(
         data={"sub": user.email}, expires_delta=access_token_expires

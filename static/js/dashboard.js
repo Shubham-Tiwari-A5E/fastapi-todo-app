@@ -220,11 +220,30 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// Format date for display
+// Format date for display (without timezone conversion)
 function formatDate(dateString) {
-    const date = new Date(dateString);
-    const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
-    return date.toLocaleDateString('en-US', options);
+    if (!dateString) return 'No date set';
+
+    // Parse the date string directly without timezone conversion
+    const parts = dateString.split('T');
+    if (!parts[0] || !parts[1]) return dateString;
+
+    const datePart = parts[0].split('-');
+    const timePart = parts[1].split(':');
+
+    const year = datePart[0];
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                        'July', 'August', 'September', 'October', 'November', 'December'];
+    const month = monthNames[parseInt(datePart[1]) - 1];
+    const day = parseInt(datePart[2]);
+
+    // Convert 24-hour to 12-hour format
+    let hour = parseInt(timePart[0]);
+    const minute = timePart[1].padStart(2, '0');
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    hour = hour % 12 || 12; // Convert 0 to 12
+
+    return `${month} ${day}, ${year} ${hour}:${minute} ${ampm}`;
 }
 
 // Modal functionality
@@ -274,10 +293,10 @@ async function editTodo(id) {
 
         // Set task time if exists
         if (todo.task_time) {
-            const taskDate = new Date(todo.task_time);
-            // Format for datetime-local input (YYYY-MM-DDTHH:MM)
-            const formattedDate = taskDate.toISOString().slice(0, 16);
-            document.getElementById('taskTime').value = formattedDate;
+            // Parse the datetime and format for datetime-local input
+            // Take the first 16 characters (YYYY-MM-DDTHH:MM) without timezone conversion
+            const taskTimeStr = todo.task_time.substring(0, 16);
+            document.getElementById('taskTime').value = taskTimeStr;
         } else {
             document.getElementById('taskTime').value = '';
         }
@@ -297,12 +316,21 @@ document.getElementById('todoForm').addEventListener('submit', async (e) => {
     const todoId = document.getElementById('todoId').value;
     const taskTimeValue = document.getElementById('taskTime').value;
 
+    // Convert local time to ISO format without changing the actual time
+    // This treats the selected time as the desired time (not as local time to convert to UTC)
+    let taskTimeISO = null;
+    if (taskTimeValue) {
+        // Parse as local time and keep it as-is
+        const [datePart, timePart] = taskTimeValue.split('T');
+        taskTimeISO = `${datePart}T${timePart}:00`;
+    }
+
     const formData = {
         title: document.getElementById('todoTitle').value,
         description: document.getElementById('todoDescription').value || null,
         priority: parseInt(document.getElementById('todoPriority').value),
         isCompleted: document.getElementById('todoCompleted').checked,
-        task_time: taskTimeValue ? new Date(taskTimeValue).toISOString() : null,
+        task_time: taskTimeISO,
         notification_enabled: document.getElementById('notificationEnabled').checked
     };
 
