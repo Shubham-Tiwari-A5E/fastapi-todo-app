@@ -24,6 +24,7 @@ class Todo(Base):
     isCompleted = Column(Boolean, default=False)
     task_time = Column(DateTime, nullable=True)  # When the task is scheduled
     notification_enabled = Column(Boolean, default=True, nullable=False)  # Enable/disable 10-min reminder
+    notification_sent = Column(Boolean, default=False, nullable=False)  # Track if reminder was sent
     user_id = Column(String(36), ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime, default=datetime.now, nullable=False)
     completed_at = Column(DateTime, nullable=True)
