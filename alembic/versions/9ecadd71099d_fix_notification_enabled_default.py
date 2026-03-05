@@ -20,15 +20,15 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     """Upgrade schema - Set default value for notification_enabled."""
-    # Update any NULL values to TRUE
-    op.execute("UPDATE todos SET notification_enabled = 1 WHERE notification_enabled IS NULL")
+    # Update any NULL values to TRUE (use PostgreSQL boolean syntax)
+    op.execute("UPDATE todos SET notification_enabled = TRUE WHERE notification_enabled IS NULL")
 
     # Alter column to set default and NOT NULL
     with op.batch_alter_table('todos', schema=None) as batch_op:
         batch_op.alter_column('notification_enabled',
                               existing_type=sa.Boolean(),
                               nullable=False,
-                              server_default='1')
+                              server_default='true')
 
 
 def downgrade() -> None:

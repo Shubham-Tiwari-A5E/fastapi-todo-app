@@ -166,3 +166,8 @@ config.local.py
 
 # Books.py (old file not part of Todos app)
 Books.py
+
+# Environment variables - IMPORTANT: Never commit credentials!
+.env
+.env.local
+.env.*.local
