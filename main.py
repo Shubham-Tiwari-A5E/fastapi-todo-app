@@ -74,9 +74,10 @@ async def startup_event():
     except Exception as e:
         print(f"⚠️ Database connection check failed: {e}")
 
-    # Small delay to ensure database is fully ready after migrations
+    # Longer delay to ensure migrations are fully complete
     import asyncio
-    await asyncio.sleep(2)
+    print("⏳ Waiting for database to stabilize after migrations...")
+    await asyncio.sleep(5)
 
     # Start notification scheduler
     try:

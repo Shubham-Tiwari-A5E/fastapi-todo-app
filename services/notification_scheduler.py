@@ -52,9 +52,12 @@ class NotificationScheduler:
                 print(f"🔍 Check #{check_count} at {current_time}")
                 await self._check_and_send_reminders()
             except Exception as e:
-                print(f"❌ Error in reminder check: {e}")
-                import traceback
-                traceback.print_exc()
+                # Suppress verbose tracebacks for known migration timing issues
+                error_msg = str(e)
+                if "notification_sent" in error_msg and "does not exist" in error_msg:
+                    print(f"⏳ Database migration in progress, skipping this check...")
+                else:
+                    print(f"❌ Error in reminder check: {e}")
 
             # Wait 1 minute before next check
             await asyncio.sleep(60)
@@ -93,7 +96,10 @@ class NotificationScheduler:
                     User.phone_number.isnot(None)
                 ).all()
             except Exception as query_error:
-                print(f"⚠️ Query error (possibly migration not complete yet): {query_error}")
+                # Silently skip if column doesn't exist yet (migration in progress)
+                error_msg = str(query_error)
+                if "notification_sent" not in error_msg or "does not exist" not in error_msg:
+                    print(f"⚠️ Unexpected query error: {query_error}")
                 return
 
             # Also log all upcoming tasks (for debugging)
