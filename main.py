@@ -1,14 +1,25 @@
 import os
+import logging
+from contextlib import asynccontextmanager
 
-# Try to load .env file for local development (optional)
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+# Load environment variables
 try:
     from dotenv import load_dotenv
     load_dotenv()
 except ImportError:
-    print("⚠️  python-dotenv not installed, using environment variables only")
-    pass
+    logger.warning("python-dotenv not installed, using environment variables only")
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.responses import JSONResponse
 from database import check_database_connection
 from routes.todoRoutes import router as todo_router
 from users import router as user_router
@@ -16,18 +27,13 @@ from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from services.notification_scheduler import notification_scheduler
 
-app = FastAPI(
-    title="FastAPI Todo App with WhatsApp Notifications",
-    description="Production-ready Todo application with authentication and WhatsApp reminders",
-    version="2.0.0"
-)
-
-@app.on_event("startup")
-async def startup_event():
-    # Run database migrations automatically on startup
-    print("=" * 60)
-    print("🔄 Running database migrations...")
-    print("=" * 60)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan management"""
+    # Startup
+    logger.info("=" * 60)
+    logger.info("🔄 Running database migrations...")
+    logger.info("=" * 60)
 
     try:
         from alembic.config import Config
@@ -37,61 +43,76 @@ async def startup_event():
         base_dir = os.path.dirname(os.path.abspath(__file__))
         alembic_ini_path = os.path.join(base_dir, "alembic.ini")
 
-        print(f"📁 Base directory: {base_dir}")
-        print(f"📁 Alembic config: {alembic_ini_path}")
+        logger.info(f"📁 Base directory: {base_dir}")
+        logger.info(f"📁 Alembic config: {alembic_ini_path}")
 
-        # Create Alembic config
         alembic_cfg = Config(alembic_ini_path)
-
-        # Set the script location
         alembic_cfg.set_main_option("script_location", os.path.join(base_dir, "alembic"))
 
-        print("🚀 Starting migration...")
-
-        # Run migrations
+        logger.info("🚀 Starting migration...")
         command.upgrade(alembic_cfg, "head")
 
-        print("=" * 60)
-        print("✅ Database migrations completed successfully!")
-        print("=" * 60)
+        logger.info("=" * 60)
+        logger.info("✅ Database migrations completed successfully!")
+        logger.info("=" * 60)
 
     except Exception as e:
-        print("=" * 60)
-        print(f"❌ Migration error: {type(e).__name__}")
-        print(f"❌ Error details: {str(e)}")
-        print("=" * 60)
-        import traceback
-        traceback.print_exc()
-        print("=" * 60)
-        print("⚠️  App will continue but database may not be ready")
-        print("⚠️  Check DATABASE_URL environment variable is set")
-        print("=" * 60)
+        logger.error(f"❌ Migration error: {type(e).__name__}: {str(e)}")
+        logger.warning("⚠️  App will continue but database may not be ready")
 
-    # Check database connection
     try:
         check_database_connection()
-        print("✅ Database connection successful!")
+        logger.info("✅ Database connection successful!")
     except Exception as e:
-        print(f"⚠️ Database connection check failed: {e}")
+        logger.error(f"⚠️ Database connection check failed: {e}")
 
-    # Longer delay to ensure migrations are fully complete
     import asyncio
-    print("⏳ Waiting for database to stabilize after migrations...")
+    logger.info("⏳ Waiting for database to stabilize...")
     await asyncio.sleep(5)
 
-    # Start notification scheduler
     try:
         await notification_scheduler.start()
-        print("✅ WhatsApp notification scheduler started")
+        logger.info("✅ WhatsApp notification scheduler started")
     except Exception as e:
-        print(f"⚠️ Notification scheduler failed to start: {e}")
+        logger.warning(f"⚠️ Notification scheduler failed: {e}")
 
+    yield  # Application runs
 
-@app.on_event("shutdown")
-async def shutdown_event():
-    # Stop notification scheduler
+    # Shutdown
+    logger.info("👋 Shutting down...")
     await notification_scheduler.stop()
-    print("👋 App shutting down...")
+    logger.info("✅ Cleanup complete")
+
+# Create FastAPI app with lifespan
+app = FastAPI(
+    title="FastAPI Todo App",
+    description="Production-ready Todo application with authentication and WhatsApp reminders",
+    version="3.0.0",
+    lifespan=lifespan,
+    docs_url="/docs",
+    redoc_url="/redoc"
+)
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Configure based on your needs
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Add Gzip compression
+app.add_middleware(GZipMiddleware, minimum_size=1000)
+
+# Global exception handler
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.error(f"Global exception: {exc}", exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error", "type": type(exc).__name__}
+    )
 
 templates = Jinja2Templates(directory="templates")
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -99,13 +120,21 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 app.include_router(user_router)
 app.include_router(todo_router)
 
-# Health check endpoint for Render
+# Health check endpoint
 @app.get("/health")
 async def health_check():
+    """Health check endpoint for monitoring"""
+    try:
+        check_database_connection()
+        db_status = "connected"
+    except:
+        db_status = "disconnected"
+    
     return {
-        "status": "healthy",
+        "status": "healthy" if db_status == "connected" else "degraded",
         "service": "FastAPI Todo App",
-        "database": os.getenv("DATABASE_HOST", "localhost")
+        "version": "3.0.0",
+        "database": db_status
     }
 
 @app.get("/")
