@@ -19,25 +19,23 @@ document.getElementById('logoutBtn').addEventListener('click', () => {
 // Profile Modal functionality
 const profileModal = document.getElementById('profileModal');
 const profileBtn = document.getElementById('profileBtn');
-const closeProfile = document.getElementById('closeProfile');
 const cancelProfile = document.getElementById('cancelProfile');
 
 profileBtn.addEventListener('click', async () => {
     await loadProfile();
     profileModal.style.display = 'block';
-});
-
-closeProfile.addEventListener('click', () => {
-    profileModal.style.display = 'none';
+    document.body.classList.add('modal-open');
 });
 
 cancelProfile.addEventListener('click', () => {
     profileModal.style.display = 'none';
+    document.body.classList.remove('modal-open');
 });
 
 window.addEventListener('click', (e) => {
     if (e.target === profileModal) {
         profileModal.style.display = 'none';
+        document.body.classList.remove('modal-open');
     }
 });
 
@@ -94,6 +92,7 @@ document.getElementById('profileForm').addEventListener('submit', async (e) => {
 
             setTimeout(() => {
                 profileModal.style.display = 'none';
+                document.body.classList.remove('modal-open');
             }, 1500);
         } else {
             const data = await response.json();
@@ -249,27 +248,29 @@ function formatDate(dateString) {
 // Modal functionality
 const modal = document.getElementById('todoModal');
 const addBtn = document.getElementById('addTodoBtn');
-const closeBtn = document.querySelector('.close');
 const cancelBtn = document.getElementById('cancelBtn');
 
 addBtn.addEventListener('click', () => {
     document.getElementById('modalTitle').textContent = 'Add New Task';
     document.getElementById('todoForm').reset();
     document.getElementById('todoId').value = '';
+    
+    // Hide completed checkbox for new tasks
+    document.getElementById('completedCheckboxGroup').style.display = 'none';
+    
     modal.style.display = 'block';
-});
-
-closeBtn.addEventListener('click', () => {
-    modal.style.display = 'none';
+    document.body.classList.add('modal-open');
 });
 
 cancelBtn.addEventListener('click', () => {
     modal.style.display = 'none';
+    document.body.classList.remove('modal-open');
 });
 
 window.addEventListener('click', (e) => {
     if (e.target === modal) {
         modal.style.display = 'none';
+        document.body.classList.remove('modal-open');
     }
 });
 
@@ -303,7 +304,11 @@ async function editTodo(id) {
 
         document.getElementById('notificationEnabled').checked = todo.notification_enabled !== false;
 
+        // Show completed checkbox for editing
+        document.getElementById('completedCheckboxGroup').style.display = 'block';
+
         modal.style.display = 'block';
+        document.body.classList.add('modal-open');
     } catch (error) {
         alert('Failed to load task details');
     }
@@ -349,6 +354,7 @@ document.getElementById('todoForm').addEventListener('submit', async (e) => {
 
         if (response.ok) {
             modal.style.display = 'none';
+            document.body.classList.remove('modal-open');
             // Reload todos to show the new one at the top
             await loadTodos();
         } else {

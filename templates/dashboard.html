@@ -55,7 +55,6 @@
     <!-- Add/Edit Todo Modal -->
     <div id="todoModal" class="modal">
         <div class="modal-content">
-            <span class="close">&times;</span>
             <h3 id="modalTitle">Add New Task</h3>
 
             <form id="todoForm">
@@ -85,23 +84,29 @@
                 <div class="form-group">
                     <label for="taskTime">⏰ Task Time (Optional)</label>
                     <input type="datetime-local" id="taskTime" name="task_time">
-                    <small style="color: #666; font-size: 0.85rem;">
-                        Set a time to get WhatsApp reminder 10 minutes before
-                    </small>
+                    
+                    <div class="checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="notificationEnabled" name="notification_enabled" checked>
+                            <span class="checkbox-text">
+                                <span class="checkbox-icon">📱</span>
+                                <span>Enable WhatsApp reminder</span>
+                                <small class="checkbox-hint">Get notified 10 minutes before task time</small>
+                            </span>
+                        </label>
+                    </div>
                 </div>
 
-                <div class="form-group">
-                    <label>
-                        <input type="checkbox" id="notificationEnabled" name="notification_enabled" checked>
-                        📱 Enable WhatsApp reminder (10 min before)
-                    </label>
-                </div>
-
-                <div class="form-group">
-                    <label>
-                        <input type="checkbox" id="todoCompleted" name="isCompleted">
-                        Mark as completed
-                    </label>
+                <div class="form-group" id="completedCheckboxGroup" style="display: none;">
+                    <div class="checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="todoCompleted" name="isCompleted">
+                            <span class="checkbox-text">
+                                <span class="checkbox-icon">✓</span>
+                                <span>Mark as completed</span>
+                            </span>
+                        </label>
+                    </div>
                 </div>
 
                 <div class="modal-buttons">
@@ -115,7 +120,6 @@
     <!-- Profile Modal -->
     <div id="profileModal" class="modal">
         <div class="modal-content">
-            <span class="close" id="closeProfile">&times;</span>
             <h3>👤 My Profile</h3>
 
             <div id="profileMessage" style="display: none; padding: 10px; margin: 10px 0; border-radius: 5px;"></div>
@@ -150,6 +154,15 @@
             </form>
         </div>
     </div>
+
+    <footer style="background: #f8f9fa; text-align: center; padding: 20px; margin-top: 40px; border-top: 2px solid #e0e0e0; font-size: 0.9rem; color: #666;">
+        <p style="margin: 0;">&copy; 2026 Todo App. All rights reserved.</p>
+        <p style="margin: 10px 0 0 0; padding-top: 10px; border-top: 1px solid #e0e0e0;">
+            💻 Developed by <strong style="color: #6366f1;">Shubham Tiwari</strong><br>
+            📧 <a href="mailto:sstt291094@gmail.com" style="color: #6366f1; text-decoration: none;">sstt291094@gmail.com</a> | 
+            📱 <a href="https://wa.me/918171619990" target="_blank" style="color: #6366f1; text-decoration: none;">+91 817 161 9990</a>
+        </p>
+    </footer>
 
     <script src="/static/js/dashboard.js?v=2.1"></script>
 </body>

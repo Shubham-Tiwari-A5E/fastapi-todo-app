@@ -20,12 +20,12 @@ def get_todos_controller(current_user: User, db: Session):
     try:
         return get_todos_by_user(current_user.id, db)
     except (ProgrammingError, OperationalError) as e:
-        logger.error(f"Database error in get_todos: {e}")
-        error_msg = str(e)
-        if "notification_sent" in error_msg and "does not exist" in error_msg:
+        logger.error(f"Database error in get_todos: {e}", exc_info=True)
+        error_msg = str(e).lower()
+        if "column" in error_msg and "does not exist" in error_msg:
             raise HTTPException(
-                status_code=503,
-                detail="Database migration pending. Please try again in a moment."
+                status_code=500,
+                detail="Database schema error. Please contact administrator."
             )
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
     except Exception as e:

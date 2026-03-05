@@ -119,11 +119,30 @@ pytest --cov             # With coverage
 
 ## 🔧 Database Migrations
 
+**Automatic Migrations** (on startup):
+- Migrations run automatically when app starts
+- Only applies new migrations (tracks version)
+- Similar to Prisma's migration system
+
+**Manual Migration Check:**
+```bash
+python run_migrations.py    # Check status and apply if needed
+```
+
+**Alembic Commands:**
 ```bash
 alembic upgrade head                          # Apply migrations
+alembic current                               # Show current version
+alembic history                               # Show migration history
 alembic revision --autogenerate -m "message" # Create migration
 alembic downgrade -1                         # Rollback
 ```
+
+**How it Works:**
+- Each migration is tracked in `alembic_version` table
+- Already applied migrations are never re-run
+- Only pending migrations are applied
+- Safe for production deployments
 
 ## 📝 License
 

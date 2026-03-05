@@ -1,4 +1,5 @@
 import os
+import sys
 import logging
 from contextlib import asynccontextmanager
 
@@ -27,47 +28,103 @@ from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from services.notification_scheduler import notification_scheduler
 
+def check_migration_needed():
+    """Check if migrations need to be run by comparing current vs head revision"""
+    try:
+        from alembic.config import Config
+        from alembic.script import ScriptDirectory
+        from alembic.runtime.migration import MigrationContext
+        from sqlalchemy import create_engine
+        
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        alembic_ini_path = os.path.join(base_dir, "alembic.ini")
+        alembic_cfg = Config(alembic_ini_path)
+        alembic_cfg.set_main_option("script_location", os.path.join(base_dir, "alembic"))
+        
+        # Get database URL
+        database_url = os.getenv("DATABASE_URL")
+        if not database_url:
+            database_url = alembic_cfg.get_main_option("sqlalchemy.url")
+        
+        # Fix postgres:// to postgresql+psycopg://
+        if database_url.startswith("postgres://"):
+            database_url = database_url.replace("postgres://", "postgresql+psycopg://", 1)
+        elif database_url.startswith("postgresql://"):
+            database_url = database_url.replace("postgresql://", "postgresql+psycopg://", 1)
+        
+        engine = create_engine(database_url)
+        
+        # Get current revision from database
+        with engine.connect() as conn:
+            context = MigrationContext.configure(conn)
+            current_rev = context.get_current_revision()
+        
+        # Get head revision from scripts
+        script = ScriptDirectory.from_config(alembic_cfg)
+        head_rev = script.get_current_head()
+        
+        logger.info(f"📊 Current DB revision: {current_rev or 'None (fresh database)'}")
+        logger.info(f"📊 Latest available revision: {head_rev}")
+        
+        return current_rev != head_rev, current_rev, head_rev
+        
+    except Exception as e:
+        logger.warning(f"⚠️ Could not check migration status: {e}")
+        return True, None, None  # Assume migration needed if we can't check
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan management"""
     # Startup
     logger.info("=" * 60)
-    logger.info("🔄 Running database migrations...")
+    logger.info("� FASTAPI TODO APP - STARTUP")
+    logger.info("=" * 60)
+    logger.info(f"📍 Environment: {'Production' if os.getenv('DATABASE_URL') else 'Development'}")
+    logger.info(f"🐍 Python version: {sys.version.split()[0]}")
+    
+    logger.info("\n" + "=" * 60)
+    logger.info("�🔄 Checking database migrations...")
     logger.info("=" * 60)
 
     try:
-        from alembic.config import Config
-        from alembic import command
+        # Check if migration is actually needed
+        needs_migration, current_rev, head_rev = check_migration_needed()
+        
+        if not needs_migration:
+            logger.info("✅ Database is up to date (no migrations needed)")
+        else:
+            logger.info("🚀 Applying database migrations...")
+            
+            from alembic.config import Config
+            from alembic import command
 
-        # Get the directory where main.py is located
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        alembic_ini_path = os.path.join(base_dir, "alembic.ini")
+            # Get the directory where main.py is located
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            alembic_ini_path = os.path.join(base_dir, "alembic.ini")
 
-        logger.info(f"📁 Base directory: {base_dir}")
-        logger.info(f"📁 Alembic config: {alembic_ini_path}")
+            alembic_cfg = Config(alembic_ini_path)
+            alembic_cfg.set_main_option("script_location", os.path.join(base_dir, "alembic"))
 
-        alembic_cfg = Config(alembic_ini_path)
-        alembic_cfg.set_main_option("script_location", os.path.join(base_dir, "alembic"))
+            # Run migration
+            command.upgrade(alembic_cfg, "head")
 
-        logger.info("🚀 Starting migration...")
-        command.upgrade(alembic_cfg, "head")
-
-        logger.info("=" * 60)
-        logger.info("✅ Database migrations completed successfully!")
-        logger.info("=" * 60)
+            logger.info("=" * 60)
+            logger.info("✅ Database migrations completed successfully!")
+            logger.info("=" * 60)
 
     except Exception as e:
         logger.error(f"❌ Migration error: {type(e).__name__}: {str(e)}")
-        logger.warning("⚠️  Attempting manual database fix...")
+        logger.warning("⚠️  Attempting automatic database fix...")
         
-        # Try manual fix as fallback
+        # Automatic fallback: run manual database fix for production
         try:
             from fix_database import fix_database
+            logger.info("🔧 Running manual schema fix...")
             fix_database()
-            logger.info("✅ Manual database fix applied")
+            logger.info("✅ Manual database fix completed successfully!")
         except Exception as fix_error:
-            logger.error(f"❌ Manual fix failed: {fix_error}")
-            logger.warning("⚠️  App will continue but database may not be ready")
+            logger.error(f"❌ Manual fix also failed: {fix_error}")
+            logger.error("⚠️  Database may not be fully initialized - app will continue but may have errors")
 
     try:
         check_database_connection()
@@ -77,7 +134,7 @@ async def lifespan(app: FastAPI):
 
     import asyncio
     logger.info("⏳ Waiting for database to stabilize...")
-    await asyncio.sleep(5)
+    await asyncio.sleep(3)
 
     try:
         await notification_scheduler.start()
@@ -85,10 +142,16 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"⚠️ Notification scheduler failed: {e}")
 
+    logger.info("\n" + "=" * 60)
+    logger.info("✅ STARTUP COMPLETE - Application Ready!")
+    logger.info("=" * 60 + "\n")
+
     yield  # Application runs
 
     # Shutdown
-    logger.info("👋 Shutting down...")
+    logger.info("\n" + "=" * 60)
+    logger.info("👋 SHUTTING DOWN...")
+    logger.info("=" * 60)
     await notification_scheduler.stop()
     logger.info("✅ Cleanup complete")
 

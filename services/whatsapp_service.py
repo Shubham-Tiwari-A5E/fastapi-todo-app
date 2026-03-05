@@ -5,8 +5,17 @@ Free trial includes $15 credit for testing
 """
 
 import os
-from twilio.rest import Client
 from datetime import datetime
+
+# Try to import Twilio - gracefully handle if not available (e.g., Python 3.14 compatibility)
+try:
+    from twilio.rest import Client
+    TWILIO_AVAILABLE = True
+except (ImportError, AttributeError) as e:
+    print(f"⚠️ Twilio not available: {e}")
+    print("ℹ️ WhatsApp notifications will be disabled")
+    TWILIO_AVAILABLE = False
+    Client = None
 
 class WhatsAppService:
     def __init__(self):
@@ -18,6 +27,10 @@ class WhatsAppService:
         # Initialize client if credentials are available
         self.client = None
         self.enabled = False
+
+        if not TWILIO_AVAILABLE:
+            print("ℹ️ WhatsApp service disabled (Twilio not available)")
+            return
 
         if self.account_sid and self.auth_token:
             try:

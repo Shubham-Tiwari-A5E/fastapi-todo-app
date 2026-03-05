@@ -203,6 +203,66 @@ header h1 {
     font-weight: 500;
 }
 
+/* Enhanced Checkbox Styling */
+.checkbox-group {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 10px;
+    margin-top: 12px;
+    border: 2px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.checkbox-group:hover {
+    border-color: var(--primary-color);
+    background: #f0f4ff;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: flex-start;
+    cursor: pointer;
+    margin: 0;
+    font-weight: normal;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    min-width: 20px;
+    margin: 2px 12px 0 0;
+    cursor: pointer;
+    accent-color: var(--primary-color);
+}
+
+.checkbox-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+}
+
+.checkbox-icon {
+    font-size: 1.1rem;
+    margin-right: 6px;
+}
+
+.checkbox-text > span {
+    display: flex;
+    align-items: center;
+    font-size: 0.95rem;
+    color: var(--text-dark);
+    font-weight: 500;
+}
+
+.checkbox-hint {
+    display: block;
+    color: #6c757d;
+    font-size: 0.8rem;
+    margin-left: 26px;
+    font-weight: normal;
+}
+
 .form-group input,
 .form-group textarea,
 .form-group select {
@@ -481,19 +541,27 @@ header h1 {
     height: 100%;
     background: rgba(0,0,0,0.5);
     animation: fadeIn 0.3s ease;
+    overflow-y: auto;
+}
+
+/* Prevent body scroll when modal is open */
+body.modal-open {
+    overflow: hidden;
 }
 
 .modal-content {
     background: white;
-    margin: 2% auto;
+    margin: 2% auto 2% auto;
     padding: 40px;
     border-radius: 15px;
     max-width: 500px;
     width: 90%;
-    max-height: 90vh;
+    max-height: 85vh;
     overflow-y: auto;
     animation: slideIn 0.3s ease;
     position: relative;
+    display: flex;
+    flex-direction: column;
 }
 
 .close {
@@ -622,23 +690,31 @@ footer {
     max-width: 500px;
 }
 
-/* Modal Scrollbar Styling */
+/* Modal Scrollbar Styling - Always visible */
 .modal-content::-webkit-scrollbar {
-    width: 8px;
+    width: 12px;
 }
 
 .modal-content::-webkit-scrollbar-track {
     background: #f1f1f1;
     border-radius: 10px;
+    margin: 10px 0;
 }
 
 .modal-content::-webkit-scrollbar-thumb {
     background: var(--primary-color);
     border-radius: 10px;
+    border: 2px solid #f1f1f1;
 }
 
 .modal-content::-webkit-scrollbar-thumb:hover {
     background: var(--secondary-color);
+}
+
+/* For Firefox */
+.modal-content {
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary-color) #f1f1f1;
 }
 
 #profileMessage {
